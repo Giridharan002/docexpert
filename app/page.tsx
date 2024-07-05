@@ -1,9 +1,9 @@
 'use client'
+import { Button } from "@/components/ui/button"
 import { api } from "@/convex/_generated/api";
 import { SignInButton, UserButton } from "@clerk/clerk-react";
 import { Authenticated, Unauthenticated, useMutation, useQuery } from "convex/react";
-import { use } from "react";
-
+import { ModeToggle } from "@/components/ui/mode-toggle";
 
 
 
@@ -18,8 +18,9 @@ export default function Home() {
       </Unauthenticated>
       <Authenticated>
         <UserButton />
-        <button className="" onClick={() => { creatDocument({title: "Hello convex"})}}>
-          CLICK ME</button>
+        <ModeToggle />
+        <Button onClick={() => { creatDocument({title: "Hello convex"})}}>
+          CLICK ME</Button>
           {documents?.map((document) => (
             <div key={document._id}>
               {document.title}
