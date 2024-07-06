@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().min(2).max(250),
@@ -35,10 +36,8 @@ export default function UploadDocumentForm({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await
-    createDocument(values);
+    await createDocument(values);
     onUpload();
-     
   }
 
   return (
@@ -57,7 +56,13 @@ export default function UploadDocumentForm({
             </FormItem>
           )}
         />
-        <Button type="submit">Upload</Button>
+        <Button className="flex gap-1 items-center" disabled={form.formState.isSubmitting} type="submit">
+          {form.formState.isSubmitting && 
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          }
+          {form.formState.isSubmitting ? 
+            "Uploading..." : "Upload"}
+        </Button>
       </form>
     </Form>
   );
