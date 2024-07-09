@@ -17,9 +17,11 @@ import { Input } from "@/components/ui/input";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Loader2 } from "lucide-react";
+import { LoadingButton } from "@/components/loading-button";
 
 const formSchema = z.object({
   title: z.string().min(2).max(250),
+  file: z.instanceof(File),
 });
 
 export default function UploadDocumentForm({
@@ -28,6 +30,8 @@ export default function UploadDocumentForm({
   onUpload: () => void;
 }) {
   const createDocument = useMutation(api.documents.createDocument);
+  const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -36,7 +40,19 @@ export default function UploadDocumentForm({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await createDocument(values);
+    const url = await generateUploadUrl();
+
+    const result = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": values.file.type },
+      body: values.file,
+    });
+
+    const { storageId } = await result.json();
+    await createDocument({
+      title: values.title,
+      fileId: storageId as string,
+    });
     onUpload();
   }
 
@@ -56,13 +72,36 @@ export default function UploadDocumentForm({
             </FormItem>
           )}
         />
-        <Button className="flex gap-1 items-center" disabled={form.formState.isSubmitting} type="submit">
-          {form.formState.isSubmitting && 
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          }
-          {form.formState.isSubmitting ? 
-            "Uploading..." : "Upload"}
-        </Button>
+
+        <FormField
+          control={form.control}
+          name="file"
+          render={({ field: { value, onChange, ...fileProps } }) => (
+            <FormItem>
+              <FormLabel>File</FormLabel>
+              <FormControl>
+                <Input
+                  {...fileProps}
+                  type="file"
+                  accept=".txt,.xml,.doc,.pdf,.docx,.jpg"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) {
+                      onChange(file);
+                    }
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <LoadingButton
+          isLoading={form.formState.isSubmitting}
+          loadingText="Uploading..."
+        >
+          Upload
+        </LoadingButton>
       </form>
     </Form>
   );
